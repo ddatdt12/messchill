@@ -9,6 +9,7 @@ const conversationRoute = require('./routes/conversation');
 const userRoute = require('./routes/user');
 const errorHandler = require('./middlewares/errorHandler');
 const AppError = require('./utils/AppError');
+const mongoose = require('mongoose');
 
 //Config
 const app = express();
@@ -52,22 +53,7 @@ app.all('*', (req, res, next) => {
 app.use(errorHandler);
 
 //Socket
-io.on('connection', (socket) => {
-  // console.log(`User connected: ${socket.id}`);
-
-  socket.on('join_conversation', (conversationId) => {
-    console.log(`User ${socket.id} join conversation: ${conversationId}`);
-    socket.join(conversationId);
-  });
-  socket.on('send_message', (messageData) => {
-    console.log('User just send message: ', messageData);
-    socket.to(messageData.conversationId).emit('receive_message', messageData);
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`User disconnected: ${socket.id}`);
-  });
-});
+require('./socket')(io);
 
 const port = process.env.PORT || 5000;
 server.listen(port, () => {
@@ -81,3 +67,9 @@ process.on('unhandledRejection', (err) => {
     process.exit(1);
   });
 });
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}

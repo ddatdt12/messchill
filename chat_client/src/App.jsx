@@ -1,23 +1,14 @@
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import LoginPage from './pages/LoginPage';
-import ChatPage from './pages/ChatPage';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import RequireAuth from './pages/Auth';
+import { ThemeProvider } from '@mui/material/styles';
+import { theme } from 'assets/theme';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import ChatSection from './pages/ChatPage/ChatSection';
-import NewMessage from './pages/ChatPage/ChatSection/NewMessage';
-// A custom theme for this app
-const theme = createTheme({
-  typography: {
-    fontFamily: 'Public Sans, sans-serif',
-  },
-  palette: {
-    neutral: {
-      main: '#64748B',
-      contrastText: '#fff',
-    },
-  },
-});
+import RequireAuth from './pages/Auth/RequireAuth';
+import Chat from './pages/Chat';
+import ChatSection from './components/Chat/ChatSection';
+import NewConversation from './components/Chat/NewConversation';
+import Login from './pages/Auth/Login';
+import Auth from './pages/Auth';
+import NewGoogleAccount from 'pages/Auth/NewGoogleAccount';
 
 const App = () => {
   return (
@@ -25,16 +16,20 @@ const App = () => {
       <ThemeProvider theme={theme}>
         <Routes>
           <Route path='/' element={<Navigate to='/chat' replace />} />
-          <Route path='/login' element={<LoginPage />} />
+          <Route path='/authentication' element={<Auth />}>
+            <Route path='login' element={<Login />} />
+            {/* <Route path='register' element={<Register />} /> */}
+            <Route path='new/google' element={<NewGoogleAccount />} />
+          </Route>
           <Route
             path='/chat'
             element={
               <RequireAuth>
-                <ChatPage />
+                <Chat />
               </RequireAuth>
             }>
-            <Route path=':id' element={<ChatSection />} />
-            <Route path='new' element={<NewMessage />} />
+            <Route path=':conversationId' element={<ChatSection />} />
+            <Route path='new' element={<NewConversation />} />
           </Route>
 
           {/* <Route path='*' element={<Navigate to='/chat' replace />} /> */}

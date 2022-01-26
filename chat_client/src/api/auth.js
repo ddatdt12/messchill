@@ -9,8 +9,16 @@ const login = (email, password) => {
     password,
   });
 };
+const register = (data) => {
+  return axios.post('/api/auth/register', data);
+};
+const googleLogin = (idToken) => {
+  return axios.post('/api/auth/login/google', {
+    idToken,
+  });
+};
 const logout = () => {
   return axios.get('/api/auth/logout');
 };
-const auth = { authenticate, login, logout };
+const auth = { authenticate, login, logout, googleLogin, register };
 export default auth;

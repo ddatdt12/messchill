@@ -23,5 +23,10 @@ ConversationSchema.virtual('messages', {
   localField: '_id',
   foreignField: 'conversation',
 });
-
+ConversationSchema.virtual('numMessages', {
+  ref: 'Message',
+  localField: '_id',
+  foreignField: 'conversation',
+  count: true,
+});
 module.exports = mongoose.model('Conversation', ConversationSchema);

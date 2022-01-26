@@ -3,7 +3,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
-
+const { OAuth2Client } = require('google-auth-library');
+const { firebaseAuth } = require('../config/firebase');
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
 
@@ -40,7 +41,7 @@ const signToken = (id) => {
 //@route        POST /api/auth/register
 //@access       Public
 exports.register = catchAsync(async (req, res, next) => {
-  const { email, password, confirmPassword, name } = req.body;
+  const { email, password, confirmPassword, name, image } = req.body;
 
   if (password !== confirmPassword) {
     return next(
@@ -48,7 +49,7 @@ exports.register = catchAsync(async (req, res, next) => {
     );
   }
 
-  const user = await User.create({name, email, password });
+  const user = await User.create({ name, email, password, image });
 
   createSendToken(user, 200, res);
 });
@@ -79,6 +80,83 @@ exports.login = catchAsync(async (req, res, next) => {
 //@access       PRIVATE
 exports.authenticate = (req, res) => {
   res.status(200).json({ user: req.user });
+};
+
+//@desc         Check user is logged in
+//@route        GET /api/auth
+//@access       PRIVATE
+exports.googleAuthenticate = async (req, res) => {
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  const { token } = req.body;
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.CLIENT_ID,
+  });
+  const { name, email, picture } = ticket.getPayload();
+  const user = await db.user.upsert({
+    where: { email: email },
+    update: { name, picture },
+    create: { name, email, picture },
+  });
+  res.status(201);
+  res.json(user);
+};
+//@desc         Check user is logged in (for mobile test)
+//@route        POST /api/auth/login/google
+//@access       PUBLIC
+exports.mobileGoogleLogin = async (req, res) => {
+  // idToken comes from the client app
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(403).json({
+        message: 'Not authorized!',
+      });
+    }
+    const decodedToken = await firebaseAuth.verifyIdToken(req.body.idToken);
+    
+    res.status(200).json({ profile: decodedToken });
+  } catch (error) {
+    console.log(error);
+    res.status(404).json({ error: error.message });
+  }
+};
+
+exports.googleLogin = async (req, res) => {
+  const { idToken } = req.body;
+  if (!idToken) {
+    return res.status(403).json({
+      message: 'Not authorized!',
+    });
+  }
+  try {
+    const decodedToken = await firebaseAuth.verifyIdToken(req.body.idToken);
+    if (!decodedToken) {
+      return res.status(403).json({
+        message: 'Not authorized!',
+      });
+    }
+    const user = await User.findOne({
+      email: decodedToken.email,
+    });
+
+    if (user) {
+      return createSendToken(user, 200, res);
+    }
+
+    res.status(200).json({
+      isCreated: false,
+      profile: {
+        email: decodedToken.email,
+        name: decodedToken.name,
+        picture: decodedToken.picture,
+      },
+    });
+  } catch (error) {
+    return res.status(403).json({
+      error: error.message,
+    });
+  }
 };
 
 //@desc         Log out user

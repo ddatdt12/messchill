@@ -2,19 +2,24 @@ const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
-const isValidUrl = (url) => {
-  return url.match(
-    /^(?:(?:https?|ftp):\/\/)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/\S*)?$/,
-  );
-};
 
 //@desc         get all post of logged in user
 //@route        POST /api/conversations
 //@access       PRIVATE
 exports.getConversationsByUser = catchAsync(async (req, res, next) => {
   const conversations = await Conversation.find({
-    user: req.user._id,
-  });
+    members: req.user._id,
+  })
+    .lean()
+    .populate({
+      path: 'members',
+      match: { _id: { $ne: req.user._id } },
+      // Explicitly exclude `_id`, see http://bit.ly/2aEfTdB
+      // select: 'name -_id'
+    })
+    .sort({
+      'lastMessage.createdAt': 'desc',
+    });
 
   res.status(200).json(conversations);
 });
@@ -23,12 +28,17 @@ exports.getConversationsByUser = catchAsync(async (req, res, next) => {
 //@route        POST /api/conversations/:id
 //@access       PRIVATE
 exports.getConversationDetails = catchAsync(async (req, res, next) => {
-  const conversations = await Conversation.find({
+  const conversation = await Conversation.findOne({
+    members: req.user._id,
     _id: req.params.id,
-    user: req.user._id,
-  }).populate('messages');
+  })
+    .lean()
+    .populate();
+  if (!conversation) {
+    return next(new AppError('Conversation not found', 404));
+  }
 
-  res.status(200).json(conversations);
+  res.status(200).json(conversation);
 });
 
 //@desc         Create new post
@@ -45,9 +55,7 @@ exports.createConversation = catchAsync(async (req, res, next) => {
     return next(new AppError('Conversations can not empty', 400));
   }
 
-  const messageData = {
-    
-  } 
+  const messageData = {};
   const newConversation = await Conversation.create({
     participants: [...participantIds],
     lastMessage: message,

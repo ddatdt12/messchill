@@ -3,6 +3,8 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middlewares/auth');
 const userController = require('../controllers/userController');
+const multer = require('multer');
+const upload = multer();
 
 router.use(protect);
 // router
@@ -12,6 +14,11 @@ router.use(protect);
 
 router.route('/me').get(userController.getUserInfo);
 router.route('/me/friends').get(userController.getUserFriends);
+router.put(
+  '/me/profile',
+  upload.single('avatar'),
+  userController.updateProfile,
+);
 
 // router.route('/:id').get(conversationController.getConversationDetails);
 // //   .put(conversationController.updatePost)

@@ -1,8 +1,11 @@
 import axios from './axios';
 
-const getFriends = () => {
+const getUserFriends = () => {
   return axios.get('/api/users/me/friends');
 };
+const updateProfile = (formData) => {
+  return axios.put('/api/users/me/profile', formData);
+};
 
-const userApi = { getFriends };
+const userApi = { getUserFriends,updateProfile };
 export default userApi;

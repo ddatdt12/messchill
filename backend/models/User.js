@@ -18,6 +18,7 @@ const UserSchema = new Schema(
     name: {
       type: String,
       required: [true, 'Please enter a name'],
+      maxlength: 30,
     },
     friends: [
       {
@@ -28,9 +29,9 @@ const UserSchema = new Schema(
     image: {
       type: String,
     },
-    isActive: {
-      type: Boolean,
-      default: false,
+    bio: {
+      type: String,
+      maxlength: 100,
     },
   },
   {
