@@ -14,7 +14,10 @@ const Message = ({ data, isCurrentUser = false, lastMessageSentTime }) => {
 
   let betweenTime = null;
 
-  if (dayjs(createdAt).diff(lastMessageSentTime, 'h') >= 2) {
+  if (
+    !lastMessageSentTime ||
+    dayjs(createdAt).diff(lastMessageSentTime, 'h') >= 2
+  ) {
     if (createdAt && dayjs(Date.now()).isSame(createdAt, 'day')) {
       betweenTime = dayjs(createdAt).format('h:mm A');
     } else {
@@ -67,8 +70,6 @@ const Message = ({ data, isCurrentUser = false, lastMessageSentTime }) => {
     </>
   );
 };
-
-
 
 const Container = styled('div')({
   // backgroundColor: '#ebebeb',

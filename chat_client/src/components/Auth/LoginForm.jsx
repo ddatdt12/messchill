@@ -73,15 +73,16 @@ const LoginForm = ({ onSubmit, loading, error }) => {
         // This gives you a Google Access Token. You can use it to access the Google API.
         const idToken = await auth.currentUser.getIdToken(true);
         await googleLogin(idToken, (data) => {
-          if (!data.isCreated) {
-            navigate('../new/google', {
-              state: {
-                profile: data.profile,
-              },
-            });
-          } else {
-            navigate('/');
-          }
+          console.log(data);
+          //   if (!data.isCreated) {
+          //     navigate('../new/google', {
+          //       state: {
+          //         profile: data.profile,
+          //       },
+          //     });
+          //   } else {
+          //     navigate('/');
+          //   }
         });
       })
       .catch((error) => {

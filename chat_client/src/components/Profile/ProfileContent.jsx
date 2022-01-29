@@ -1,21 +1,16 @@
 import EditIcon from '@mui/icons-material/Edit';
-import { Box, Button, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
 import { makeStyles, styled } from '@mui/styles';
 import React from 'react';
-const ProfileContent = ({ onEditProfileTab }) => {
-  const bio = 'Đây là mai, mình rất tuyệt với về ...';
-  const email = 'binzml1714@gmail.com';
-  const name = 'Thanh Dat';
+import { ImageLayer, ImageWrapper } from './styles';
+const ProfileContent = ({ onEditProfileTab, user }) => {
+  const { email, name, bio, image } = user ?? {};
   return (
     <Box p={2}>
       <Stack spacing={2} direction='row' alignItems={'center'}>
-        <Box mr={2}>
-          <img
-            src='https://picsum.photos/200/200'
-            alt='avatar'
-            style={{ borderRadius: '50%' }}
-          />
-        </Box>
+        <Image>
+          <img src={image} alt='avatar' />
+        </Image>
         <Box>
           <Typography fontSize={24} fontWeight={'bold'}>
             {name}
@@ -49,6 +44,18 @@ const Title = styled(Box)({
   fontWeight: 'bold',
   fontSize: 20,
   margin: '16px 0 8px 0',
+});
+const Image = styled(Box)({
+  minWidth: 200,
+  width: 200,
+  minHeight: 200,
+  height: 200,
+  '& img': {
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    objectFit: 'cover',
+  }
 });
 const Description = styled(Typography)({
   display: 'flex',

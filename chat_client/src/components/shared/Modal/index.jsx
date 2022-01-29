@@ -1,7 +1,7 @@
 import { Dialog } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import Profile from 'components/ModalBody/Profile';
+import Profile from 'components/Profile/Profile';
 import useModal from 'context/ModalContext';
 import React from 'react';
 import PeopleModal from './PeopleModal';
@@ -11,7 +11,7 @@ const Modal = (props) => {
   const { open, type, setType } = useModal();
 
   const handleClose = (cleanCallback) => {
-    if (cleanCallback) {
+    if (typeof cleanCallback === 'function') {
       cleanCallback();
     }
     setType(null);

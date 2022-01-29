@@ -1,27 +1,26 @@
 import CancelIcon from '@mui/icons-material/Cancel';
 import SaveIcon from '@mui/icons-material/Save';
 import { Box, Button, Stack, TextField } from '@mui/material';
-import { makeStyles, styled } from '@mui/styles';
-import React, { useCallback, useEffect, useState } from 'react';
+import { styled } from '@mui/styles';
 import userApi from 'api/user';
+import ButtonLoading from 'components/ButtonLoading';
+import React, { useCallback, useEffect, useState } from 'react';
 import AvatarUpload from './AvatarUpload';
-const EditProfile = ({ onProfileTab, onClose }) => {
+const EditProfile = ({ onProfileTab, user, updateProfile }) => {
   const [previewImage, setPreviewImage] = useState(null);
   const email = 'binzml1714@gmail.com';
   const [profile, setProfile] = useState({
     name: '',
     bio: '',
+    imageUrl: '',
     image: null,
   });
-  const { name, bio } = profile;
-  // const [imageToResize, setImageToResize] = useState(undefined);
-  // const [resizedImage, setResizedImage] = useState(undefined);
+  const [loading, setLoading] = useState(false);
+  const { name, bio, imageUrl } = profile;
+
   useEffect(() => {
-    setProfile({
-      name: 'Thanh Dat',
-      bio: 'Đây là mai, mình rất tuyệt với về ...',
-    });
-  }, []);
+    setProfile({ name: user.name, bio: user.bio, imageUrl: user.image });
+  }, [user]);
 
   const handleDropImage = (acceptedFiles) => {
     console.log(acceptedFiles);
@@ -49,14 +48,18 @@ const EditProfile = ({ onProfileTab, onClose }) => {
       }
       formData.append('name', name);
       formData.append('bio', bio);
+      setLoading(true);
       const { data } = await userApi.updateProfile(formData);
-      console.log(data);
+      updateProfile(data.user);
+      setLoading(false);
+      revokeURLImage();
+      onProfileTab();
     } catch (error) {
       console.log(error.response);
     }
-    // revokeURLImage();
   };
   const handleCancel = () => {
+    onProfileTab();
     revokeURLImage();
   };
   const revokeURLImage = useCallback(() => {
@@ -74,7 +77,7 @@ const EditProfile = ({ onProfileTab, onClose }) => {
             accept='image/*'
             maxSize={3145728}
             previewImage={previewImage}
-            userAvatar={null}
+            userAvatar={imageUrl}
             onDrop={handleDropImage}
           />
           <Box>
@@ -102,14 +105,15 @@ const EditProfile = ({ onProfileTab, onClose }) => {
           />
         </Box>
 
-        <Stack mt={2} spacing={2} direction={'row'}>
-          <Button
+        <Stack mt={2} spacing={2} direction={'row'} justifyContent={'flex-end'}>
+          <ButtonLoading
             variant={'contained'}
             color='primary'
             startIcon={<SaveIcon />}
-            onClick={handleSave}>
-            Save
-          </Button>
+            onClick={handleSave}
+            text={'Save'}
+            loading={loading}
+          />
           <Button
             variant={'lightgray'}
             startIcon={<CancelIcon />}

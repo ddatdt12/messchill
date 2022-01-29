@@ -15,6 +15,9 @@ export const authReducer = (state, action) => {
     case 'FAILED_LOGIN': {
       return { user: null, isLoading: false, error: payload };
     }
+    case 'UPDATE_USER': {
+      return { ...state, user: { ...payload } };
+    }
     default:
       return { ...state };
   }

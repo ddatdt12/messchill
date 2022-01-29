@@ -1,7 +1,7 @@
 import { DialogContent, DialogTitle } from '@mui/material';
 import { Box } from '@mui/system';
 import Contacts from 'components/Contacts';
-import ProfileTitle from 'components/ModalBody/ProfileTitle';
+import ProfileTitle from 'components/Profile/ProfileTitle';
 import React from 'react';
 import CustomTabs from '../CustomTabs';
 import SearchTextBox from '../SearchTextBox';

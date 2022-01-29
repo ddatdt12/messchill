@@ -52,7 +52,7 @@ export function AuthProvider({ children }) {
       dispatch({
         type: 'AUTH_LOADING',
       });
-      
+
       const { data } = await authApi.googleLogin(idToken);
       if (data.user) {
         dispatch({ type: 'SET_AUTH', payload: data.user });
@@ -91,6 +91,9 @@ export function AuthProvider({ children }) {
     }
     callback();
   };
+  const updateUser = (user) => {
+    dispatch({ type: 'UPDATE_USER', payload: user });
+  };
 
   const value = {
     authState,
@@ -100,6 +103,7 @@ export function AuthProvider({ children }) {
     logout,
     register,
     googleLogin,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

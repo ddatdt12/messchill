@@ -14,7 +14,6 @@ const ProfileTitle = ({ title, onClose }) => {
       </Typography>
       <IconButton
         aria-label='upload picture'
-        component='span'
         onClick={onClose}>
         <CloseIcon />
       </IconButton>

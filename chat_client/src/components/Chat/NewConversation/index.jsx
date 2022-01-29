@@ -35,10 +35,22 @@ const NewConversation = () => {
     }
 
     if (chatFriend) {
-      socket.emit('create_new_conversation', {
-        sender: authState.user,
-        friend: chatFriend,
-      });
+      socket.emit(
+        'create_new_conversation',
+        {
+          sender: authState.user,
+          friend: chatFriend,
+        },
+        ({ conversation, error }) => {
+          if (!error) {
+            console.log('receive_new_conversation_info: ', conversation);
+            setConversation(conversation);
+            if (conversation) {
+              setMessages([...conversation.messages]);
+            }
+          }
+        },
+      );
     }
 
     setMessages([]);
@@ -48,15 +60,7 @@ const NewConversation = () => {
     if (!socket) {
       return;
     }
-    socket.on('receive_new_conversation_info', ({ conversation, error }) => {
-      if (!error) {
-        console.log('receive_new_conversation_info: ', conversation);
-        setConversation(conversation);
-        if (conversation) {
-          setMessages([...conversation.messages]);
-        }
-      }
-    });
+    socket.on('receive_new_conversation_info', ({ conversation, error }) => {});
     // socket.on('receive_message_to_new_conversation');
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -75,7 +79,7 @@ const NewConversation = () => {
         // conversation,
       },
     ]);
-    //socket here
+
     if (conversation) {
       socket.emit(
         'send_message',
@@ -90,17 +94,6 @@ const NewConversation = () => {
           navigate(`../${conversation._id}`);
         },
       );
-      // navigate(`../${conversation._id}`, {
-      //   state: {
-      //     type: 'SEND_MESSAGE_FROM_NEW_CONVERSATION',
-      //     messageData: {
-      //       text: inputMessage,
-      //       sender: authState.user._id,
-      //       conversation: conversation._id,
-      //       memberIds: conversation.members,
-      //     },
-      //   },
-      // });
     } else {
       socket.emit(
         'send_message_to_new_conversation',
