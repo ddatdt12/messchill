@@ -73,15 +73,18 @@ const executeSocket = (io) => {
       }
     });
 
-    socket.on('create_new_conversation', async ({ sender, friend }) => {
-      const response = await checkNewConversationExist(sender, friend);
+    socket.on(
+      'create_new_conversation',
+      async ({ sender, friend }, callback) => {
+        const response = await checkNewConversationExist(sender, friend);
 
-      if (!response.error && response.conversation) {
-        socket.join(response.conversation._id.toString());
-      }
+        if (!response.error && response.conversation) {
+          socket.join(response.conversation._id.toString());
+        }
 
-      socket.emit('receive_new_conversation_info', response);
-    });
+        callback(response);
+      },
+    );
 
     socket.on('send_message', async (data, callback) => {
       const { memberIds, ...messageData } = data;

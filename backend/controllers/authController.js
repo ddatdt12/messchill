@@ -101,26 +101,6 @@ exports.googleAuthenticate = async (req, res) => {
   res.status(201);
   res.json(user);
 };
-//@desc         Check user is logged in (for mobile test)
-//@route        POST /api/auth/login/google
-//@access       PUBLIC
-exports.mobileGoogleLogin = async (req, res) => {
-  // idToken comes from the client app
-  try {
-    const { idToken } = req.body;
-    if (!idToken) {
-      return res.status(403).json({
-        message: 'Not authorized!',
-      });
-    }
-    const decodedToken = await firebaseAuth.verifyIdToken(req.body.idToken);
-    
-    res.status(200).json({ profile: decodedToken });
-  } catch (error) {
-    console.log(error);
-    res.status(404).json({ error: error.message });
-  }
-};
 
 exports.googleLogin = async (req, res) => {
   const { idToken } = req.body;

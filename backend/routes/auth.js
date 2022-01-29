@@ -9,7 +9,6 @@ router.get('/', protect, authController.authenticate);
 router.get('/logout', protect, authController.logout);
 router.post('/register', authController.register);
 router.post('/login', authController.login);
-router.post('/login/google', authController.mobileGoogleLogin);
-router.post('/loginGoogle', authController.googleLogin);
+router.post('/login/google', authController.googleLogin);
 
 module.exports = router;
