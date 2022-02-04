@@ -3,11 +3,10 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import { Box, IconButton, LinearProgress } from '@mui/material';
 import { styled } from '@mui/system';
-
 import userApi from 'api/user';
-import AsyncSearchInput from 'components/shared/AsyncSearchInput';
+import MultipleSelect from 'components/shared/MultipleSelect';
 import useAuth from 'context/AuthContext';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import InputMessageForm from '../ChatSection/InputMessageForm';
 import Message from '../ChatSection/Message';
@@ -21,11 +20,11 @@ const NewConversation = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const { socket } = useOutletContext();
-  const [chatFriend, setChatFriend] = useState(null);
+  const [selectedContacts, setSelectedContacts] = useState([]);
   const [conversation, setConversation] = useState(null);
 
   useEffect(() => {
-    messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    // messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
     console.log('REF: ', messageEndRef);
   }, [messages]);
 
@@ -33,13 +32,14 @@ const NewConversation = () => {
     if (!socket) {
       return;
     }
+    setMessages([]);
 
-    if (chatFriend) {
+    if (selectedContacts.length !== 0) {
       socket.emit(
-        'create_new_conversation',
+        'new_conversation',
         {
           sender: authState.user,
-          friend: chatFriend,
+          contacts: selectedContacts,
         },
         ({ conversation, error }) => {
           if (!error) {
@@ -52,30 +52,19 @@ const NewConversation = () => {
         },
       );
     }
-
-    setMessages([]);
-  }, [authState.user, chatFriend, socket]);
-
-  useEffect(() => {
-    if (!socket) {
-      return;
-    }
-    socket.on('receive_new_conversation_info', ({ conversation, error }) => {});
-    // socket.on('receive_message_to_new_conversation');
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket]);
+    console.log(selectedContacts);
+  }, [authState.user, selectedContacts]);
 
   const handleMessageFormSubmit = (e) => {
     e.preventDefault();
-    if (!inputMessage || !chatFriend) return;
+    if (!inputMessage || selectedContacts.length === 0) return;
 
     setMessages((prev) => [
       ...prev,
       {
         _id: `${Math.random() * 100}`,
         text: inputMessage,
-        sender: authState.user,
+        sender: authState.user._id,
         // conversation,
       },
     ]);
@@ -90,7 +79,6 @@ const NewConversation = () => {
           memberIds: conversation.members,
         },
         () => {
-          console.log('callback call!');
           navigate(`../${conversation._id}`);
         },
       );
@@ -102,38 +90,48 @@ const NewConversation = () => {
             text: inputMessage,
             sender: authState.user._id,
           },
-          receiver: chatFriend._id,
+          members: [authState.user, ...selectedContacts],
         },
         (response) => {
           if (!response.error) {
             navigate(`../${response.conversation._id}`);
           } else {
-            console.log(response.error);
+            alert(response.error);
           }
         },
       );
     }
-    //When send message done
+    // When send message done
     setInputMessage('');
   };
 
-  // const getUserFriends = useCallback(() => userApi.getUserFriends, []);
+  const getContacts = useCallback(async () => {
+    try {
+      const { data } = await userApi.getUserFriends();
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
+  }, []);
+  const handleChange = (data) => {
+    setSelectedContacts(data);
+  };
   return (
-    <Container>
+    <>
       <Header>
-        <AsyncSearchInput
-          label='Friend'
-          value={chatFriend}
-          setValue={(data) => {
-            console.log(data);
-            setChatFriend(data);
-          }}
-          asyncFunc={userApi.getUserFriends}
+        <MultipleSelect
+          label={'Contacts'}
+          getOptionLabel={(contact) => contact.name}
+          onChange={handleChange}
+          asyncFunc={getContacts}
+          filterOptions={(contacts, state) =>
+            contacts.filter((c) => c._id !== state._id)
+          }
         />
       </Header>
       {loading && <LinearProgress />}
       <MessagesBody>
-        {chatFriend &&
+        {selectedContacts.length !== 0 &&
           (messages.length !== 0 ? (
             messages.map((m) => (
               <Message
@@ -147,7 +145,7 @@ const NewConversation = () => {
           ))}
         <div ref={messageEndRef} />
       </MessagesBody>
-      {chatFriend && (
+      {selectedContacts.length !== 0 && (
         <Footer>
           <IconButton>
             <InsertEmoticonIcon color='primary' />
@@ -169,15 +167,10 @@ const NewConversation = () => {
           </Box>
         </Footer>
       )}
-    </Container>
+    </>
   );
 };
-const Container = styled('div')({
-  flex: 7,
-  backgroundColor: 'white',
-  display: 'flex',
-  flexDirection: 'column',
-});
+
 const Header = styled('div')({
   backgroundColor: 'white',
   display: 'flex',

@@ -14,6 +14,7 @@ const ConversationSideBar = ({ socket }) => {
   const [contacts, setContacts] = useState([]);
   const [tab, setTab] = useState('conversation');
 
+
   useEffect(() => {
     if (tab === 'conversation') {
       (async () => {
@@ -21,7 +22,7 @@ const ConversationSideBar = ({ socket }) => {
           const res = await conversationAPI.getConversationList();
           setConversations([...res.data]);
         } catch (error) {
-          console.log(error);
+          alert(error);
         }
       })();
     } else if (tab === 'active') {
@@ -33,14 +34,13 @@ const ConversationSideBar = ({ socket }) => {
         },
       );
     }
-  }, [tab]);
+  }, [tab, currentUser._id]);
 
   useEffect(() => {
     if (!socket) return;
 
-    //Cân nhắc tối ưu khúc này
+    //TODO: Cân nhắc tối ưu khúc này
     socket.on('update_last_message_of_conversation', (message) => {
-      console.log(message);
       setConversations((prevCon) => {
         const conversationTemp = [...prevCon];
         const index = prevCon.findIndex(
@@ -50,7 +50,7 @@ const ConversationSideBar = ({ socket }) => {
         if (index === -1) return conversationTemp;
 
         const [removed] = conversationTemp.splice(index, 1);
-        removed.lastMessage = message;
+        removed.latestMessage = message;
         conversationTemp.unshift(removed);
         return conversationTemp;
       });
@@ -62,7 +62,7 @@ const ConversationSideBar = ({ socket }) => {
 
   const handleLogout = (callback) => {
     logout(callback);
-    socket.emit('offline', currentUser)
+    socket.emit('offline', currentUser);
   };
   return (
     <Container>

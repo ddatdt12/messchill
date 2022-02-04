@@ -1,10 +1,13 @@
 const Conversation = require('../models/Conversation');
 const mongoose = require('mongoose');
 const Message = require('../models/Message');
-const checkNewConversationExist = async (sender, receiver) => {
+const checkNewConversationExist = async (sender, contacts) => {
   try {
     const conversation = await Conversation.findOne({
-      members: { $all: [sender._id, receiver._id], $size: 2 },
+      members: {
+        $all: [sender._id, ...contacts.map((c) => c._id)],
+        $size: 1 + contacts.length,
+      },
     })
       .lean()
       .populate('messages');
@@ -17,20 +20,30 @@ const checkNewConversationExist = async (sender, receiver) => {
     return { conversation: null, error: error.message };
   }
 };
-const createNewConversation = async (newMessage, senderId, receiverId) => {
+const createNewConversation = async (newMessage, members) => {
   try {
-    const lastMessage = {
+    const latestMessage = {
       ...newMessage,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
 
-    const conversation = await Conversation.create({
-      members: [senderId, receiverId],
-      lastMessage,
-    });
+    const newConversation = {
+      members: members.map((m) => m._id),
+      latestMessage,
+    };
+
+    if (members.length > 2) {
+      newConversation.type = 'Group';
+      newConversation.conversationName = members
+        .map((m) => {
+          return m.name;
+        })
+        .join(', ');
+    }
+    const conversation = await Conversation.create(newConversation);
     await Message.create({
-      ...lastMessage,
+      ...latestMessage,
       conversation: conversation._id,
     });
 
@@ -53,7 +66,7 @@ const getConversation = async (userId, conversationId) => {
       .lean()
       .populate({
         path: 'messages',
-        options: { sort: '-createdAt', limit: 20 },
+        options: { sort: '-createdAt', limit: 10 },
       })
       .populate('members')
       .populate('numMessages');
@@ -61,7 +74,8 @@ const getConversation = async (userId, conversationId) => {
     if (!conversation) {
       throw Error('Conversation not found');
     }
-    conversation.messages.sort((m1, m2) => m1.createdAt - m2.createdAt);
+    populateSenderOfMessage(conversation);
+    // conversation.messages.sort((m1, m2) => m1.createdAt - m2.createdAt);
 
     return { conversation, error: null };
   } catch (error) {
@@ -69,6 +83,18 @@ const getConversation = async (userId, conversationId) => {
   }
 };
 
+const populateSenderOfMessage = (conversation) => {
+  const memberInfoMap = new Map(
+    conversation.members.map((m) => [m._id.toString(), m]),
+  );
+
+  for (const mess of conversation.messages) {
+    mess.sender = memberInfoMap.get(mess.sender.toString());
+  }
+  conversation.latestMessage.sender = memberInfoMap.get(
+    conversation.latestMessage.sender.toString(),
+  );
+};
 module.exports = {
   checkNewConversationExist,
   createNewConversation,

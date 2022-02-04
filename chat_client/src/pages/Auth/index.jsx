@@ -6,13 +6,11 @@ import React from 'react';
 import {
   Navigate,
   Outlet, useLocation,
-  useNavigate
 } from 'react-router-dom';
 import useAuth from '../../context/AuthContext';
 
 const Login = (props) => {
   const classes = useStyles();
-  const navigate = useNavigate();
   const location = useLocation();
   const auth = useAuth();
 

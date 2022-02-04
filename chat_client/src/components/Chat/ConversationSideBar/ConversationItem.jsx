@@ -8,22 +8,27 @@ import { makeStyles, styled } from '@mui/styles';
 
 dayjs.extend(relativeTime);
 
-const ConversationItem = ({ conversation, currentUser }) => {
+const ConversationItem = ({
+  conversation,
+  currentUser,
+  isCurrentConversation,
+}) => {
   const classes = useStyles();
   const navigate = useNavigate();
-  const { members, lastMessage, createdAt } = conversation;
+  const { members, latestMessage } = conversation;
   const receiver = members.filter((m) => m._id !== currentUser._id)[0];
-  const lastSentTime = dayjs(createdAt).fromNow(true);
+  const lastSentTime = dayjs(latestMessage.createdAt).fromNow(true);
 
   return (
-    <Container onClick={() => navigate(`/chat/${conversation?._id}`)}>
-      <Avatar sx={{ mr: 1 }} />
+    <Container
+      onClick={() => navigate(`/chat/${conversation?._id}`)}
+      isCurrentConversation={isCurrentConversation}>
+      <Avatar sx={{ mr: 1 }} src={receiver?.image} />
       <Box
         display='flex'
         justifyContent={'center'}
         flexDirection={'column'}
         flex={1}
-        // width={'100%'}
         mb='auto'
         lineHeight={1.5}>
         <h3>{receiver?.name ?? 'Place holder'}</h3>
@@ -43,7 +48,7 @@ const ConversationItem = ({ conversation, currentUser }) => {
                   display: 'block',
                   minWidth: 0,
                 }}>
-                {lastMessage.text}
+                {latestMessage.text}
               </span>
             </span>
             <Typography fontSize={1} variant='span' alignSelf={'center'}>
@@ -73,9 +78,11 @@ const useStyles = makeStyles({
     backgroundColor: 'red',
   },
 });
-const Container = styled('div')({
+const Container = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'isCurrentConversation',
+})(({ isCurrentConversation }) => ({
   display: 'flex',
-  backgroundColor: 'white',
+  backgroundColor: !isCurrentConversation ? 'white' : '#ebebeb',
   alignItems: 'center',
   padding: '12px 24px',
   '&:hover': {
@@ -84,5 +91,5 @@ const Container = styled('div')({
   },
   maxWidth: '100%',
   minWidth: '100%',
-});
+}));
 export default ConversationItem;

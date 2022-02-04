@@ -9,7 +9,17 @@ const ConversationSchema = new Schema(
         ref: 'User',
       },
     ],
-    lastMessage: Object,
+    type: { type: String, enum: ['OneOne', 'Group'], default: 'OneOne' },
+    conversationName: { type: String, default: null },
+    conversationPhoto: {
+      type: Object,
+      default: null,
+    },
+    moreInfo: {
+      type: Map,
+      of: Object,
+    },
+    latestMessage: { type: Object, required: true },
   },
   {
     timestamps: true,

@@ -2,7 +2,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import { Box, Button, Stack, Typography } from '@mui/material';
 import { makeStyles, styled } from '@mui/styles';
 import React from 'react';
-import { ImageLayer, ImageWrapper } from './styles';
 const ProfileContent = ({ onEditProfileTab, user }) => {
   const { email, name, bio, image } = user ?? {};
   return (
@@ -57,7 +56,7 @@ const Image = styled(Box)({
     objectFit: 'cover',
   }
 });
-const Description = styled(Typography)({
+const Description = styled('div')({
   display: 'flex',
   justifyContent: 'center',
   textAlign: 'center',

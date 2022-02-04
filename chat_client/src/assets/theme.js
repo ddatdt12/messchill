@@ -1,6 +1,6 @@
+import { blue, grey } from '@mui/material/colors';
 import { createTheme } from '@mui/material/styles';
 
-const { blue, red, grey } = require('@mui/material/colors');
 
 //#f0f2f5
 export const theme = createTheme({

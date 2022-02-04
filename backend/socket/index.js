@@ -29,8 +29,9 @@ const executeSocket = (io) => {
         activeUsers.get(user._id).numbers++;
       }
     }
-    console.log(activeUsers);
+
     socket.join(socket.userId);
+
     socket.on('join_conversation', async (conversationId, callback) => {
       console.log(`User ${socket.id} join conversation: ${conversationId}`);
       const { conversation, error } = await getConversation(
@@ -41,11 +42,11 @@ const executeSocket = (io) => {
       if (!error) {
         socket.join(conversationId);
 
-        for (let memId of conversation.members) {
-          if (memId._id !== socket.userId) {
-            socket.join(memId._id.toString());
-          }
-        }
+        // for (let memId of conversation.members) {
+        //   if (memId._id !== socket.userId) {
+        //     socket.join(memId._id.toString());
+        //   }
+        // }
         console.log('Rooms after join: ', socket.rooms);
       }
 
@@ -59,38 +60,32 @@ const executeSocket = (io) => {
       console.log('Rooms before leave: ', socket.rooms);
 
       socket.leave(conversationId);
-      const { conversation, error } = await getConversation(
-        socket.userId,
-        conversationId,
-      );
+      // const { conversation, error } = await getConversation(
+      //   socket.userId,
+      //   conversationId,
+      // );
 
-      if (!error) {
-        for (let memId of conversation.members) {
-          if (memId._id !== socket.userId) {
-            socket.leave(memId._id.toString());
-          }
-        }
-      }
+      // if (!error) {
+      //   for (let memId of conversation.members) {
+      //     if (memId._id !== socket.userId) {
+      //       socket.leave(memId._id.toString());
+      //     }
+      //   }
+      // }
     });
 
-    socket.on(
-      'create_new_conversation',
-      async ({ sender, friend }, callback) => {
-        const response = await checkNewConversationExist(sender, friend);
+    socket.on('new_conversation', async ({ sender, contacts }, callback) => {
+      console.log('Sender: ', sender, '\nContacts: ', contacts);
+      const response = await checkNewConversationExist(sender, contacts);
 
-        if (!response.error && response.conversation) {
-          socket.join(response.conversation._id.toString());
-        }
-
-        callback(response);
-      },
-    );
+      callback(response);
+    });
 
     socket.on('send_message', async (data, callback) => {
       const { memberIds, ...messageData } = data;
       const { message, error } = await createNewMessage(messageData);
       if (!error) {
-        io.to(messageData.conversation).emit('receive_message', message);
+        socket.to(messageData.conversation).emit('receive_message', message);
 
         console.log(memberIds);
         //Send all member in rooms (have socket user) to update last message (in sidebar)
@@ -118,28 +113,24 @@ const executeSocket = (io) => {
 
     socket.on(
       'send_message_to_new_conversation',
-      async ({ newMessage, receiver }, callback) => {
-        const res = await createNewConversation(
-          newMessage,
-          socket.userId,
-          receiver,
-        );
-
+      async ({ newMessage, members }, callback) => {
+        const res = await createNewConversation(newMessage, members);
         if (!res.error) {
-          io.to(receiver)
-            .to(socket.userId)
-            .emit('get_new_conversation', res.conversation);
+          members.forEach((m) =>
+            io.to(m._id).emit('get_new_conversation', res.conversation),
+          );
         }
 
-        //callback is function defined in frond end
+        // callback is function defined in frond end
         callback(res);
       },
     );
 
     socket.on(
       'get_more_messages',
-      async ({ conversationId, page, limit }, callback) => {
-        const res = await getMoreMessages({ conversationId, page, limit });
+      async ({ conversationId, skip, limit }, callback) => {
+        const res = await getMoreMessages({ conversationId, skip, limit });
+        
         callback(res);
       },
     );
@@ -176,7 +167,6 @@ const executeSocket = (io) => {
           activeUsers.delete(socket.userId);
         }
       }
-      console.log(activeUsers);
     });
   });
 };

@@ -21,5 +21,7 @@ const MessageSchema = new Schema(
     timestamps: true,
   },
 );
-
+MessageSchema.post('find', function(result) {
+  console.log('find() returned ' + JSON.stringify(result));
+});
 module.exports = mongoose.model('Message', MessageSchema);

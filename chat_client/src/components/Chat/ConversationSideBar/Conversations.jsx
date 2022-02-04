@@ -1,9 +1,13 @@
 import { Avatar, Box } from '@mui/material';
 import SearchTextBox from 'components/shared/SearchTextBox';
 import React from 'react';
+import { useParams } from 'react-router-dom';
 import ConversationItem from './ConversationItem';
 import RightTopBar from './RightTopBar';
+
 const Conversations = ({ conversations, currentUser, logout, setTab }) => {
+  const { conversationId } = useParams();
+
   return (
     <>
       <Box p={3}>
@@ -37,6 +41,7 @@ const Conversations = ({ conversations, currentUser, logout, setTab }) => {
               key={con._id}
               conversation={con}
               currentUser={currentUser}
+              isCurrentConversation={conversationId === con._id}
             />
           ))}
       </Box>

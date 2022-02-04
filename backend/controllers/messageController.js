@@ -14,7 +14,7 @@ exports.createMessage = catchAsync(async (req, res, next) => {
 
   const newConversation = await Conversation.create({
     participants: [...participantIds],
-    lastMessage: message,
+    latestMessage: message,
     lastSentTime: new Date(),
   });
 

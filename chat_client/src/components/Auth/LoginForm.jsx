@@ -1,5 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Co2Sharp, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -10,22 +10,20 @@ import {
   IconButton,
   InputAdornment,
   Link,
-  Typography,
+  Typography
 } from '@mui/material';
 import { styled } from '@mui/styles';
+import FacebookLogo from 'assets/images/facebook_logo.png';
 import InputForm from 'components/shared/InputForm';
-import { auth, facebookProvider, googleProvider } from 'config/firebase';
+import { auth, googleProvider } from 'config/firebase';
 import useAuth from 'context/AuthContext';
 import {
-  GoogleAuthProvider,
-  signInWithPopup,
-  FacebookAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import React, { useState } from 'react';
 import GoogleButton from 'react-google-button';
 // import GoogleLogin from 'react-google-login';
 import { useForm } from 'react-hook-form';
-import FacebookLogo from 'assets/images/facebook_logo.png';
 import { useNavigate } from 'react-router-dom';
 import * as yup from 'yup';
 

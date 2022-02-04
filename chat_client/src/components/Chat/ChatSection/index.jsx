@@ -9,14 +9,17 @@ import {
   Box,
   Button,
   CircularProgress,
-  IconButton
+  IconButton,
 } from '@mui/material';
 import { styled } from '@mui/system';
 import useAuth from 'context/AuthContext';
 import React, { useEffect, useRef, useState } from 'react';
+import InfiniteScroll from 'react-infinite-scroll-component';
 import { useOutletContext, useParams } from 'react-router-dom';
 import InputMessageForm from './InputMessageForm';
 import Message from './Message';
+
+const LIMIT = 10;
 const ChatSection = () => {
   const {
     authState: { user: currentUser },
@@ -28,24 +31,31 @@ const ChatSection = () => {
   const [conversation, setConversation] = useState(null);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
 
+  const [loadMoreOption, setLoadMoreOption] = useState({
+    messagesLength: 0,
+    hasMore: false,
+  });
+
+  const { messagesLength, hasMore } = loadMoreOption;
+  console.log('loadMoreOption: ', loadMoreOption);
   useEffect(() => {
     if (conversation) {
-      messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      // messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [conversation]);
 
   useEffect(() => {
+    setMessages([]);
     if (!socket) return;
     setLoading(true);
     socket.emit(
       'join_conversation',
       conversationId,
       ({ conversation: conversationData, error }) => {
+        setLoading(false);
+
         if (!error) {
-          setLoading(false);
           conversationData.receiver = conversationData.members.filter(
             (m) => m._id !== currentUser._id,
           )[0];
@@ -53,43 +63,36 @@ const ChatSection = () => {
 
           conversationData.messages = undefined;
           setConversation(conversationData);
+          setLoadMoreOption({
+            messagesLength: conversationData.numMessages,
+            hasMore: conversationData.numMessages > LIMIT,
+          });
         } else {
           setConversation(null);
           alert(error);
         }
       },
     );
-    //Just join conversation when user join another room, so don't need to listen socket changes
-    console.log('After join', loading);
 
     return () => {
       //leave last conversation before join new room
+      console.log('Leave room:', conversationId);
+
       socket.emit('leave_conversation', conversationId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId]);
+  }, [conversationId, currentUser?._id, socket?.connected]);
 
-  const handleGetMoreMessage = () => {
-    setLoading(true);
-    socket.emit(
-      'get_more_messages',
-      {
-        conversationId,
-        page: page + 1,
-        limit: 10,
-      },
-      (res) => {
-        console.log(res);
-        if (!res.error) {
-          setMessages((prev) => [...res.messages, ...prev]);
-          setLoading(false);
-        } else {
-          console.log(res);
-        }
-      },
-    );
-    setPage((page) => page + 1);
-  };
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('receive_message', (message) => {
+      setMessages((prev) => [...prev, message]);
+      console.log('Receive message');
+      // messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    });
+  }, [socket]);
+
   const handleMessageFormSubmit = (e) => {
     e.preventDefault();
     if (!inputMessage || !socket) return;
@@ -107,16 +110,41 @@ const ChatSection = () => {
           setMessages((prev) => [...prev, message]);
           messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
         } else {
-          console.log(error);
+          alert(error);
         }
       },
     );
 
     setInputMessage('');
   };
+  const fetchMoreMessages = () => {
+    console.log('fetchMoreMessages');
+    if (!socket) return;
+    socket.emit(
+      'get_more_messages',
+      {
+        conversationId,
+        skip: messages.length,
+        limit: LIMIT,
+      },
+      (res) => {
+        console.log(res);
+        if (!res.error) {
+          setMessages((prev) => [...prev, ...res.messages]);
 
+          setLoadMoreOption((prev) => ({
+            ...prev,
+            hasMore: res.hasMore ?? false,
+          }));
+        } else {
+          alert(res.error);
+        }
+      },
+    );
+  };
   return (
-    <Container>
+    <>
+      {}
       <Header>
         <Info>
           <Avatar sx={{ mr: 1 }} />
@@ -135,11 +163,46 @@ const ChatSection = () => {
           <IconButton>
             <VideocamIcon color='primary' />
           </IconButton>
-          <Button onClick={handleGetMoreMessage}>Load more </Button>
         </Box>
       </Header>
       {/* {loading && <LinearProgress />} */}
-      <MessagesBody>
+      <MessagesBody id='scrollableDiv'>
+        {/*Put the scroll bar always on the bottom*/}
+        {messages.length !== 0 && (
+          <InfiniteScroll
+            dataLength={messages.length}
+            next={fetchMoreMessages}
+            style={{
+              display: 'flex',
+              flexDirection: 'column-reverse',
+              position: 'relative',
+            }} //To put endMessage and loader to the top.
+            hasMore={hasMore}
+            inverse={true} 
+            loader={
+              <CircularProgress
+                style={{
+                  position: 'absolute',
+                  top: 10,
+                  left: '50%',
+                }}
+              />
+            }
+            endMessage={<h3>No more</h3>}
+            scrollableTarget='scrollableDiv'>
+            {messages.map((m, i) => (
+              <Message
+                key={m._id}
+                data={m}
+                isCurrentUser={m.sender._id === currentUser._id}
+                lastMessageSentTime={i > 0 ? messages[i - 1].createdAt : null}
+              />
+            ))}
+          </InfiniteScroll>
+        )}
+        {/* <div ref={messageEndRef} /> */}
+      </MessagesBody>
+      {/* <MessagesBody>
         {loading && (
           <CircularProgress
             style={{
@@ -153,13 +216,13 @@ const ChatSection = () => {
           messages.map((m, i) => (
             <Message
               key={m._id}
-              data={m}
-              isCurrentUser={m.sender === currentUser._id}
+              data={m}  
+              isCurrentUser={m.sender._id === currentUser._id}
               lastMessageSentTime={i > 0 ? messages[i - 1].createdAt : null}
             />
           ))}
         <div ref={messageEndRef} />
-      </MessagesBody>
+      </MessagesBody> */}
       <Footer>
         <IconButton>
           <InsertEmoticonIcon color='primary' />
@@ -180,15 +243,10 @@ const ChatSection = () => {
           </IconButton>
         </Box>
       </Footer>
-    </Container>
+    </>
   );
 };
-const Container = styled('div')({
-  flex: 7,
-  backgroundColor: 'white',
-  display: 'flex',
-  flexDirection: 'column',
-});
+
 const Header = styled('div')({
   backgroundColor: 'white',
   display: 'flex',
@@ -212,7 +270,10 @@ const MessagesBody = styled('div')({
   backgroundColor: 'white',
   padding: 20,
   overflowY: 'scroll',
+  overflowX: 'hidden',
   position: 'relative',
+  display: 'flex',
+  flexDirection: 'column-reverse',
 });
 const Footer = styled('div')({
   display: 'flex',

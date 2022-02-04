@@ -18,7 +18,7 @@ exports.getConversationsByUser = catchAsync(async (req, res, next) => {
       // select: 'name -_id'
     })
     .sort({
-      'lastMessage.createdAt': 'desc',
+      'latestMessage.createdAt': 'desc',
     });
 
   res.status(200).json(conversations);
@@ -58,7 +58,7 @@ exports.createConversation = catchAsync(async (req, res, next) => {
   const messageData = {};
   const newConversation = await Conversation.create({
     participants: [...participantIds],
-    lastMessage: message,
+    latestMessage: message,
     lastSentTime: new Date(),
   });
 

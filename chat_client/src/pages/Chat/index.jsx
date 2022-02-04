@@ -7,16 +7,19 @@ import Modal from 'components/shared/Modal';
 import { Outlet } from 'react-router-dom';
 import io from 'socket.io-client';
 import { ModalProvider } from 'context/ModalContext';
+import { styled } from '@mui/system';
 
 const SOCKET_SERVER = 'http://localhost:5000';
 const ChatPage = () => {
   const classes = useStyles();
   const {
     authState: { user },
-    obj,
   } = useAuth();
 
-  const [socket, setSocket] = useState(null);
+  const [socket, setSocket] = useState(
+    io.connect(SOCKET_SERVER, { auth: { token: user._id } }),
+  );
+  const [connected, setConnected] = useState(false);
 
   useEffect(() => {
     if (!socket) return;
@@ -26,26 +29,29 @@ const ChatPage = () => {
     });
   }, [socket]);
 
-  console.log('USER OUTSIDE:', user);
   useEffect(() => {
-    console.log('User: ', user);
-    if (user) {
-      setSocket((prev) => {
-        if (!prev)
-          return io.connect(SOCKET_SERVER, { auth: { token: user._id } });
-      });
+    if (user?._id) {
+      setSocket(io.connect(SOCKET_SERVER, { auth: { token: user._id } }));
+      console.log('Connect');
     }
-  }, [user]);
+  }, [user?._id]);
 
+  useEffect(() => {
+    socket.on('connect', () => {
+      console.log('socket connect');
+      setConnected(true);
+    });
+  }, [socket]);
 
+  console.log('Parent>', socket);
   return (
     <ModalProvider>
-      <>{obj}</>
       <Container className={classes.container} sx={{ display: 'flex' }}>
         <Paper elevation={4} className={classes.chatWrapper}>
           <ConversationSideBar socket={socket} />
-
-          <Outlet context={{ socket }} />
+          <ChatBody>
+            {connected ? <Outlet context={{ socket }} /> : 'Loading'}
+          </ChatBody>
         </Paper>
       </Container>
       <Modal />
@@ -65,6 +71,13 @@ const useStyles = makeStyles({
     width: '100%',
     display: 'flex',
   },
+});
+
+const ChatBody = styled('div')({
+  flex: 7,
+  backgroundColor: 'white',
+  display: 'flex',
+  flexDirection: 'column',
 });
 ChatPage.propTypes = {};
 

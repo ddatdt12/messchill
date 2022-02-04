@@ -3,14 +3,14 @@ const mongoose = require('mongoose');
 const Message = require('../models/Message');
 const createNewMessage = async (newMessage) => {
   try {
-    const lastMessage = {
+    const latestMessage = {
       ...newMessage,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
 
     await Conversation.findByIdAndUpdate(newMessage.conversation, {
-      lastMessage,
+      latestMessage,
     });
     const message = await Message.create(newMessage);
 
@@ -25,19 +25,28 @@ const createNewMessage = async (newMessage) => {
   }
 };
 
-const getMoreMessages = async ({ conversationId, page, limit }) => {
+const getMoreMessages = async ({ conversationId, skip, limit }) => {
   try {
     const messages = await Message.find({
       conversation: conversationId,
     })
       .lean()
       .sort('-createdAt')
-      .skip(page * limit)
-      .limit(limit);
+      .skip(skip)
+      .limit(limit)
+      .populate('sender');
+    const remainMessagesTotal =
+      (await Message.countDocuments({
+        conversation: conversationId,
+      })) -
+      (skip + limit);
     //Cần lấy những message gần nhất
-
-    messages.sort((m1, m2) => m1.createdAt - m2.createdAt);
-    return { messages: messages, error: null };
+    // messages.sort((m1, m2) => m1.createdAt - m2.createdAt);
+    return {
+      messages: messages,
+      hasMore: remainMessagesTotal > 0,
+      error: null,
+    };
   } catch (error) {
     return { messages: null, error: error.message };
   }
