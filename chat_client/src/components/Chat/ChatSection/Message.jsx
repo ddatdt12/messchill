@@ -48,7 +48,7 @@ const Message = ({ data, isCurrentUser = false, lastMessageSentTime }) => {
         direction={'row'}
         spacing={1}
         justifyContent={isCurrentUser && 'flex-end'}
-        my={2}>
+        my={1}>
         {!isCurrentUser && (
           //Don't work tooltip
           <Tooltip title={name} placement='right'>

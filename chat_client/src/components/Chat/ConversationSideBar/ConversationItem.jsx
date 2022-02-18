@@ -17,8 +17,12 @@ const ConversationItem = ({
   const navigate = useNavigate();
   const { members, latestMessage } = conversation;
   const receiver = members.filter((m) => m._id !== currentUser._id)[0];
-  const lastSentTime = dayjs(latestMessage.createdAt).fromNow(true);
+  const conversationName =
+    conversation.type === 'Group'
+      ? conversation.conversationName
+      : receiver.name;
 
+  const lastSentTime = dayjs(latestMessage.createdAt).fromNow(true);
   return (
     <Container
       onClick={() => navigate(`/chat/${conversation?._id}`)}
@@ -30,8 +34,9 @@ const ConversationItem = ({
         flexDirection={'column'}
         flex={1}
         mb='auto'
-        lineHeight={1.5}>
-        <h3>{receiver?.name ?? 'Place holder'}</h3>
+        lineHeight={1.5}
+        width={150}>
+        <h3>{conversationName ?? 'Place holder'}</h3>
         <div>
           <Box display={'flex'} alignItems={'center'}>
             <span

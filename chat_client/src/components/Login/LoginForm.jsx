@@ -10,16 +10,14 @@ import {
   IconButton,
   InputAdornment,
   Link,
-  Typography
+  Typography,
 } from '@mui/material';
 import { styled } from '@mui/styles';
 import FacebookLogo from 'assets/images/facebook_logo.png';
 import InputForm from 'components/shared/InputForm';
-import { auth, googleProvider } from 'config/firebase';
+import { auth, facebookProvider, googleProvider } from 'config/firebase';
 import useAuth from 'context/AuthContext';
-import {
-  signInWithPopup
-} from 'firebase/auth';
+import { FacebookAuthProvider, signInWithPopup } from 'firebase/auth';
 import React, { useState } from 'react';
 import GoogleButton from 'react-google-button';
 // import GoogleLogin from 'react-google-login';
@@ -70,8 +68,35 @@ const LoginForm = ({ onSubmit, loading, error }) => {
       .then(async () => {
         // This gives you a Google Access Token. You can use it to access the Google API.
         const idToken = await auth.currentUser.getIdToken(true);
+        console.log('idToken: ',idToken)
+        // await googleLogin(idToken, (data) => {
+        // console.log(data);
+        //   if (!data.isCreated) {
+        //     navigate('../new/google', {
+        //       state: {
+        //         profile: data.profile,
+        //       },
+        //     });
+        //   } else {
+        //     navigate('/');
+        //   }
+        // });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
+  const handleFacebookLogin = () => {
+    signInWithPopup(auth, facebookProvider)
+      .then(async (result) => {
+        console.log('REsult from facebook login:', result);
+
+        console.log('user: ', auth.currentUser);
+        const idToken = await auth.currentUser.getIdToken();
+        console.log(idToken);
         await googleLogin(idToken, (data) => {
-          console.log(data);
+          console.log('Mic check fb login: ', data);
           //   if (!data.isCreated) {
           //     navigate('../new/google', {
           //       state: {
@@ -82,30 +107,19 @@ const LoginForm = ({ onSubmit, loading, error }) => {
           //     navigate('/');
           //   }
         });
+        // ...
       })
       .catch((error) => {
+        // Handle Errors here.
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // The email of the user's account used.
+        const email = error.email;
+        // The AuthCredential type that was used.
+        const credential = FacebookAuthProvider.credentialFromError(error);
         console.log(error);
+        // ...
       });
-  };
-
-  const handleFacebookLogin = () => {
-    // signInWithPopup(auth, facebookProvider)
-    //   .then((result) => {
-    //     console.log('user: ', auth.currentUser);
-    //     console.log(auth.currentUser.getIdToken(true));
-    //     // ...
-    //   })
-    //   .catch((error) => {
-    //     // Handle Errors here.
-    //     const errorCode = error.code;
-    //     const errorMessage = error.message;
-    //     // The email of the user's account used.
-    //     const email = error.email;
-    //     // The AuthCredential type that was used.
-    //     const credential = FacebookAuthProvider.credentialFromError(error);
-    //     console.log(error);
-    //     // ...
-    //   });
   };
   return (
     <Box

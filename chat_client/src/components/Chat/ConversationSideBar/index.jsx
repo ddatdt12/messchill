@@ -54,7 +54,7 @@ const ConversationSideBar = ({ socket }) => {
         conversationTemp.unshift(removed);
         return conversationTemp;
       });
-    });
+    }); 
     socket.on('get_new_conversation', (conversation) => {
       setConversations((prev) => [conversation, ...prev]);
     });

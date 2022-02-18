@@ -8,13 +8,18 @@ import MultipleSelect from 'components/shared/MultipleSelect';
 import useAuth from 'context/AuthContext';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import InfiniteScrollMessagesBox from '../ChatSection/InfiniteScrollMessagesBox';
 import InputMessageForm from '../ChatSection/InputMessageForm';
 import Message from '../ChatSection/Message';
+
+const LIMIT = 10;
 
 const NewConversation = () => {
   const navigate = useNavigate();
 
-  const { authState } = useAuth();
+  const {
+    authState: { user: currentUser },
+  } = useAuth();
   const [loading, setLoading] = useState(false);
   const messageEndRef = useRef(null);
   const [messages, setMessages] = useState([]);
@@ -22,6 +27,7 @@ const NewConversation = () => {
   const { socket } = useOutletContext();
   const [selectedContacts, setSelectedContacts] = useState([]);
   const [conversation, setConversation] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
 
   useEffect(() => {
     // messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -38,7 +44,7 @@ const NewConversation = () => {
       socket.emit(
         'new_conversation',
         {
-          sender: authState.user,
+          sender: currentUser,
           contacts: selectedContacts,
         },
         ({ conversation, error }) => {
@@ -52,8 +58,7 @@ const NewConversation = () => {
         },
       );
     }
-    console.log(selectedContacts);
-  }, [authState.user, selectedContacts]);
+  }, [currentUser, selectedContacts]);
 
   const handleMessageFormSubmit = (e) => {
     e.preventDefault();
@@ -64,7 +69,7 @@ const NewConversation = () => {
       {
         _id: `${Math.random() * 100}`,
         text: inputMessage,
-        sender: authState.user._id,
+        sender: currentUser._id,
         // conversation,
       },
     ]);
@@ -74,7 +79,7 @@ const NewConversation = () => {
         'send_message',
         {
           text: inputMessage,
-          sender: authState.user._id,
+          sender: currentUser._id,
           conversation: conversation._id,
           memberIds: conversation.members,
         },
@@ -83,14 +88,15 @@ const NewConversation = () => {
         },
       );
     } else {
+      console.log('send_message_to_new_conversation');
       socket.emit(
         'send_message_to_new_conversation',
         {
           newMessage: {
             text: inputMessage,
-            sender: authState.user._id,
+            sender: currentUser._id,
           },
-          members: [authState.user, ...selectedContacts],
+          members: [currentUser, ...selectedContacts],
         },
         (response) => {
           if (!response.error) {
@@ -116,6 +122,29 @@ const NewConversation = () => {
   const handleChange = (data) => {
     setSelectedContacts(data);
   };
+
+  const fetchMoreMessages = () => {
+    console.log('fetchMoreMessages');
+    if (!socket) return;
+    socket.emit(
+      'get_more_messages',
+      {
+        conversationId: conversation._id,
+        skip: messages.length,
+        limit: LIMIT,
+      },
+      (res) => {
+        console.log(res);
+        if (!res.error) {
+          setMessages((prev) => [...prev, ...res.messages]);
+
+          setHasMore(res.hasMore ?? false);
+        } else {
+          alert(res.error);
+        }
+      },
+    );
+  };
   return (
     <>
       <Header>
@@ -129,22 +158,14 @@ const NewConversation = () => {
           }
         />
       </Header>
-      {loading && <LinearProgress />}
-      <MessagesBody>
-        {selectedContacts.length !== 0 &&
-          (messages.length !== 0 ? (
-            messages.map((m) => (
-              <Message
-                key={m._id}
-                data={m}
-                isCurrentUser={m.sender === authState.user._id}
-              />
-            ))
-          ) : (
-            <h1>No messages</h1>
-          ))}
-        <div ref={messageEndRef} />
-      </MessagesBody>
+      <InfiniteScrollMessagesBox
+        loading={loading}
+        messages={messages}
+        hasMore={hasMore}
+        fetchMoreMessages={fetchMoreMessages}
+        currentUserId={currentUser._id}
+      />
+
       {selectedContacts.length !== 0 && (
         <Footer>
           <IconButton>

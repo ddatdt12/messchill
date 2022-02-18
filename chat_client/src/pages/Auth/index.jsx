@@ -3,10 +3,7 @@ import styled from '@emotion/styled';
 import { Box, Container, Paper } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import React from 'react';
-import {
-  Navigate,
-  Outlet, useLocation,
-} from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import useAuth from '../../context/AuthContext';
 
 const Login = (props) => {
@@ -39,9 +36,7 @@ const Login = (props) => {
             paddingTop: '50px',
             margin: '0 auto',
           }}>
-
           <Outlet />
-
         </Box>
       </Container>
     </Box>

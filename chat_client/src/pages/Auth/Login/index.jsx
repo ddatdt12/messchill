@@ -1,5 +1,5 @@
-import LoginForm from 'components/Auth/LoginForm';
-import TopTitle from 'components/Auth/TopTitle';
+import LoginForm from 'components/Login/LoginForm';
+import TopTitle from 'components/Login/TopTitle';
 import React from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import useAuth from '../../../context/AuthContext';
@@ -35,6 +35,5 @@ const Login = (props) => {
     </>
   );
 };
-
 
 export default Login;

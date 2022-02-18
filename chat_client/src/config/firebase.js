@@ -5,27 +5,15 @@ import {
   getAuth,
   GoogleAuthProvider,
 } from 'firebase/auth';
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// const firebaseConfig = {
-//   apiKey: 'AIzaSyBSB737XXE7c1ZB_ljaxuQMlGXbA7n0HmU',
-//   authDomain: 'messchill-33f2b.firebaseapp.com',
-//   projectId: 'messchill-33f2b',
-//   storageBucket: 'messchill-33f2b.appspot.com',
-//   messagingSenderId: '416127210499',
-//   appId: '1:416127210499:web:8d1c1bf14e547a7b9d2a36',
-// };
-
-//Test
 const firebaseConfig = {
-  apiKey: 'AIzaSyDpO1a16rja5RKK1wVA-4cuHJ6QcVTjppQ',
-  authDomain: 'weather-tracking-85ad9.firebaseapp.com',
-  projectId: 'weather-tracking-85ad9',
-  storageBucket: 'weather-tracking-85ad9.appspot.com',
-  messagingSenderId: '477533455223',
-  appId: '1:477533455223:web:2b7640613db926f3231772',
+  apiKey: 'AIzaSyCTzf3bH61AWN-Y9YV8gA_IcKKHJDaz4i4',
+  authDomain: 'sese-681d5.firebaseapp.com',
+  projectId: 'sese-681d5',
+  storageBucket: 'sese-681d5.appspot.com',
+  messagingSenderId: '920078585236',
+  appId: '1:920078585236:web:c436123373e843d1075381',
+  measurementId: 'G-9JVDRK097X',
 };
 
 // Initialize Firebase

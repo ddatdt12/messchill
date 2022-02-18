@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material';
-import NewGoogleAccountForm from 'components/Auth/NewGoogleAccountForm';
+import NewGoogleAccountForm from 'components/Login/NewGoogleAccountForm';
 import React from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import useAuth from '../../../context/AuthContext';

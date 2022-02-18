@@ -13,7 +13,7 @@ const register = (data) => {
   return axios.post('/api/auth/register', data);
 };
 const googleLogin = (idToken) => {
-  return axios.post('/api/auth/login/google', {
+  return axios.post('/api/auth/login/social', {
     idToken,
   });
 };

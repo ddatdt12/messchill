@@ -4,20 +4,14 @@ import CallIcon from '@mui/icons-material/Call';
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import VideocamIcon from '@mui/icons-material/Videocam';
-import {
-  Avatar,
-  Box,
-  Button,
-  CircularProgress,
-  IconButton,
-} from '@mui/material';
+import { Avatar, Box, IconButton } from '@mui/material';
 import { styled } from '@mui/system';
 import useAuth from 'context/AuthContext';
-import React, { useEffect, useRef, useState } from 'react';
-import InfiniteScroll from 'react-infinite-scroll-component';
+import React, { useEffect, useState } from 'react';
+import { useRef } from 'react';
 import { useOutletContext, useParams } from 'react-router-dom';
+import InfiniteScrollMessagesBox from './InfiniteScrollMessagesBox';
 import InputMessageForm from './InputMessageForm';
-import Message from './Message';
 
 const LIMIT = 10;
 const ChatSection = () => {
@@ -27,23 +21,14 @@ const ChatSection = () => {
   const { socket } = useOutletContext();
   const { conversationId } = useParams();
   const [messages, setMessages] = useState([]);
-  const messageEndRef = useRef(null);
   const [conversation, setConversation] = useState(null);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const [loadMoreOption, setLoadMoreOption] = useState({
-    messagesLength: 0,
-    hasMore: false,
-  });
-
-  const { messagesLength, hasMore } = loadMoreOption;
-  console.log('loadMoreOption: ', loadMoreOption);
+  const [hasMore, setHasMore] = useState(false);
   useEffect(() => {
-    if (conversation) {
-      // messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length !== 0) {
     }
-  }, [conversation]);
+  }, [messages]);
 
   useEffect(() => {
     setMessages([]);
@@ -63,10 +48,7 @@ const ChatSection = () => {
 
           conversationData.messages = undefined;
           setConversation(conversationData);
-          setLoadMoreOption({
-            messagesLength: conversationData.numMessages,
-            hasMore: conversationData.numMessages > LIMIT,
-          });
+          setHasMore(conversationData.numMessages > LIMIT);
         } else {
           setConversation(null);
           alert(error);
@@ -87,8 +69,7 @@ const ChatSection = () => {
     if (!socket) return;
 
     socket.on('receive_message', (message) => {
-      setMessages((prev) => [...prev, message]);
-      console.log('Receive message');
+      setMessages((prev) => [message, ...prev]);
       // messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
     });
   }, [socket]);
@@ -107,8 +88,11 @@ const ChatSection = () => {
       },
       ({ message, error }) => {
         if (!error) {
-          setMessages((prev) => [...prev, message]);
-          messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          setMessages((prev) => [
+            { ...message, sender: { ...currentUser } },
+            ...prev,
+          ]);
+          // messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
         } else {
           alert(error);
         }
@@ -132,10 +116,7 @@ const ChatSection = () => {
         if (!res.error) {
           setMessages((prev) => [...prev, ...res.messages]);
 
-          setLoadMoreOption((prev) => ({
-            ...prev,
-            hasMore: res.hasMore ?? false,
-          }));
+          setHasMore(res.hasMore ?? false);
         } else {
           alert(res.error);
         }
@@ -165,64 +146,14 @@ const ChatSection = () => {
           </IconButton>
         </Box>
       </Header>
-      {/* {loading && <LinearProgress />} */}
-      <MessagesBody id='scrollableDiv'>
-        {/*Put the scroll bar always on the bottom*/}
-        {messages.length !== 0 && (
-          <InfiniteScroll
-            dataLength={messages.length}
-            next={fetchMoreMessages}
-            style={{
-              display: 'flex',
-              flexDirection: 'column-reverse',
-              position: 'relative',
-            }} //To put endMessage and loader to the top.
-            hasMore={hasMore}
-            inverse={true} 
-            loader={
-              <CircularProgress
-                style={{
-                  position: 'absolute',
-                  top: 10,
-                  left: '50%',
-                }}
-              />
-            }
-            endMessage={<h3>No more</h3>}
-            scrollableTarget='scrollableDiv'>
-            {messages.map((m, i) => (
-              <Message
-                key={m._id}
-                data={m}
-                isCurrentUser={m.sender._id === currentUser._id}
-                lastMessageSentTime={i > 0 ? messages[i - 1].createdAt : null}
-              />
-            ))}
-          </InfiniteScroll>
-        )}
-        {/* <div ref={messageEndRef} /> */}
-      </MessagesBody>
-      {/* <MessagesBody>
-        {loading && (
-          <CircularProgress
-            style={{
-              position: 'absolute',
-              top: 10,
-              left: '50%',
-            }}
-          />
-        )}
-        {messages &&
-          messages.map((m, i) => (
-            <Message
-              key={m._id}
-              data={m}  
-              isCurrentUser={m.sender._id === currentUser._id}
-              lastMessageSentTime={i > 0 ? messages[i - 1].createdAt : null}
-            />
-          ))}
-        <div ref={messageEndRef} />
-      </MessagesBody> */}
+
+      <InfiniteScrollMessagesBox
+        loading={loading}
+        messages={messages}
+        hasMore={hasMore}
+        fetchMoreMessages={fetchMoreMessages}
+        currentUserId={currentUser._id}
+      />
       <Footer>
         <IconButton>
           <InsertEmoticonIcon color='primary' />
@@ -265,16 +196,7 @@ const Info = styled(Box)({
     color: 'gray',
   },
 });
-const MessagesBody = styled('div')({
-  flex: 1,
-  backgroundColor: 'white',
-  padding: 20,
-  overflowY: 'scroll',
-  overflowX: 'hidden',
-  position: 'relative',
-  display: 'flex',
-  flexDirection: 'column-reverse',
-});
+
 const Footer = styled('div')({
   display: 'flex',
   backgroundColor: 'lightgray',

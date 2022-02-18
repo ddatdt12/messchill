@@ -10,23 +10,30 @@ import { ModalProvider } from 'context/ModalContext';
 import { styled } from '@mui/system';
 
 const SOCKET_SERVER = 'http://localhost:5000';
+// const socketIns = io.connect(SOCKET_SERVER);
 const ChatPage = () => {
   const classes = useStyles();
   const {
     authState: { user },
   } = useAuth();
 
-  const [socket, setSocket] = useState(
-    io.connect(SOCKET_SERVER, { auth: { token: user._id } }),
-  );
+  const [socket, setSocket] = useState(null);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
     if (!socket) return;
-
-    socket.on('connect_error', (err) => {
-      console.log(err.message); // not authorized
+    socket.on('connect', () => {
+      console.log('Socket connect', socket?.connected);
+      setConnected(true);
     });
+
+    socket.on('connect_error', () => {
+      console.log('connect_error');
+      socket.connect();
+    });
+  }, [socket]);
+  useEffect(() => {
+    console.log('Check socket', socket?.connected);
   }, [socket]);
 
   useEffect(() => {
@@ -36,14 +43,6 @@ const ChatPage = () => {
     }
   }, [user?._id]);
 
-  useEffect(() => {
-    socket.on('connect', () => {
-      console.log('socket connect');
-      setConnected(true);
-    });
-  }, [socket]);
-
-  console.log('Parent>', socket);
   return (
     <ModalProvider>
       <Container className={classes.container} sx={{ display: 'flex' }}>
